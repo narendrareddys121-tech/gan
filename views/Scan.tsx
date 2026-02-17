@@ -14,9 +14,10 @@ interface ScanProps {
 export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisComplete, user }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
 
   useEffect(() => {
     async function startCamera() {
@@ -25,16 +26,21 @@ export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisCompl
           video: { facingMode: 'environment' },
           audio: false 
         });
-        setStream(s);
+        streamRef.current = s;
         if (videoRef.current) {
           videoRef.current.srcObject = s;
         }
+        setCameraReady(true);
       } catch (e) {
         setError('Camera access denied. Please enable permissions.');
       }
     }
     startCamera();
-    return () => stream?.getTracks().forEach(t => t.stop());
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop());
+      }
+    };
   }, []);
 
   const captureAndAnalyze = async () => {
@@ -90,6 +96,16 @@ export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisCompl
         playsInline 
         className="flex-1 object-cover"
       />
+      
+      {/* Loading overlay when analyzing */}
+      {isAnalyzing && (
+        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-40">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-white text-sm font-medium">Analyzing...</p>
+          </div>
+        </div>
+      )}
       
       {/* UI Overlay */}
       <div className="absolute inset-0 flex flex-col pointer-events-none">

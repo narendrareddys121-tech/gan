@@ -1,7 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
+import { LucideX } from 'lucide-react';
 
-export const Processing: React.FC = () => {
+interface ProcessingProps {
+  onCancel?: () => void;
+}
+
+export const Processing: React.FC<ProcessingProps> = ({ onCancel }) => {
   const [stage, setStage] = useState(0);
   const stages = [
     'Detecting packaging...',
@@ -18,7 +23,17 @@ export const Processing: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-12">
+    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-12 relative">
+      {/* Cancel button */}
+      {onCancel && (
+        <button 
+          onClick={onCancel}
+          className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+        >
+          <LucideX size={20} />
+        </button>
+      )}
+      
       <div className="relative w-48 h-48">
         {/* Brain/Neural Network Simulation Animation */}
         <div className="absolute inset-0 flex items-center justify-center">
@@ -28,7 +43,7 @@ export const Processing: React.FC = () => {
               className="absolute w-2 h-2 bg-blue-500 rounded-full"
               style={{
                 transform: `rotate(${i * 60}deg) translate(40px)`,
-                animation: `pulse 1.5s ease-in-out infinite ${i * 0.2}s`
+                animation: `neural-pulse 1.5s ease-in-out infinite ${i * 0.2}s`
               }}
             ></div>
           ))}
@@ -57,9 +72,15 @@ export const Processing: React.FC = () => {
       </div>
 
       <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 0.3; transform: rotate(var(--rot)) translate(40px) scale(1); }
-          50% { opacity: 1; transform: rotate(var(--rot)) translate(60px) scale(1.5); }
+        @keyframes neural-pulse {
+          0%, 100% { 
+            opacity: 0.3; 
+            transform: rotate(${0}deg) translate(40px) scale(1); 
+          }
+          50% { 
+            opacity: 1; 
+            transform: rotate(${0}deg) translate(60px) scale(1.5); 
+          }
         }
       `}</style>
     </div>

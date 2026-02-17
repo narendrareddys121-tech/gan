@@ -3,6 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ThemeMode, AnimationIntensity, AppState, ProductAnalysis, UserProfile } from './types';
 import { DEFAULT_USER_PROFILE } from './constants';
 import { ThemeWrapper } from './components/ThemeWrapper';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { ToastProvider } from './components/Toast';
 import { Home } from './views/Home';
 import { Onboarding } from './views/Onboarding';
 import { Scan } from './views/Scan';
@@ -84,7 +86,7 @@ const App: React.FC = () => {
       case 'scan':
         return <Scan onBack={() => navigate('home')} onScanStart={() => navigate('processing')} onAnalysisComplete={handleAnalysisComplete} user={state.user} />;
       case 'processing':
-        return <Processing />;
+        return <Processing onCancel={() => navigate('scan')} />;
       case 'results':
         return <Results analysis={state.currentAnalysis} onBack={() => navigate('home')} onDeepDive={() => navigate('deep-dive')} onCompare={() => navigate('comparison')} isFavorite={state.favorites.includes(state.currentAnalysis?.id || '')} toggleFavorite={() => state.currentAnalysis && toggleFavorite(state.currentAnalysis.id)} />;
       case 'tools':
@@ -105,9 +107,13 @@ const App: React.FC = () => {
   };
 
   return (
-    <ThemeWrapper user={state.user}>
-      {renderScreen()}
-    </ThemeWrapper>
+    <ErrorBoundary>
+      <ToastProvider>
+        <ThemeWrapper user={state.user}>
+          {renderScreen()}
+        </ThemeWrapper>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 };
 

@@ -13,7 +13,7 @@ interface SettingsProps {
 export const Settings: React.FC<SettingsProps> = ({ user, updateProfile, onBack }) => {
   return (
     <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
-      <div className="p-6 sticky top-0 z-20 bg-inherit/80 backdrop-blur-md flex items-center gap-4">
+      <div className="p-6 sticky top-0 z-20 bg-[#0F1419]/80 backdrop-blur-md flex items-center gap-4">
         <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-white/5"><LucideChevronLeft /></button>
         <h2 className="text-xl font-bold">Settings</h2>
       </div>

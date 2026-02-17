@@ -24,7 +24,7 @@ export const Results: React.FC<ResultsProps> = ({ analysis, onBack, onDeepDive, 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar pb-24">
       {/* Top Bar */}
-      <div className="sticky top-0 z-20 p-6 flex justify-between items-center bg-inherit/80 backdrop-blur-xl">
+      <div className="sticky top-0 z-20 p-6 flex justify-between items-center bg-[#0F1419]/80 backdrop-blur-xl">
         <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-white/5 transition-colors">
           <LucideChevronLeft />
         </button>
