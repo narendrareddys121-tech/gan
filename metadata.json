@@ -1,0 +1,8 @@
+{
+  "name": "AuraScan AI - Product Intelligence",
+  "description": "An intelligent product analysis tool that scans packaging and ingredient labels to provide multi-layered wellness insights using Gemini AI.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
