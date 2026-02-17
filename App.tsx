@@ -14,8 +14,10 @@ import { History } from './views/History';
 import { DeepDive } from './views/DeepDive';
 import { Comparison } from './views/Comparison';
 import { Analytics } from './views/Analytics';
+import { Login } from './views/Login';
 
 export type Screen = 
+  | 'login'
   | 'onboarding' 
   | 'home' 
   | 'scan' 
@@ -41,7 +43,14 @@ const App: React.FC = () => {
     };
   });
 
-  const [currentScreen, setCurrentScreen] = useState<Screen>(state.onboarded ? 'home' : 'onboarding');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('aurascan_authenticated') === 'true';
+  });
+
+  const [currentScreen, setCurrentScreen] = useState<Screen>(() => {
+    if (!isAuthenticated) return 'login';
+    return state.onboarded ? 'home' : 'onboarding';
+  });
   const [prevScreen, setPrevScreen] = useState<Screen | null>(null);
 
   useEffect(() => {
@@ -66,6 +75,12 @@ const App: React.FC = () => {
     navigate('results');
   };
 
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem('aurascan_authenticated', 'true');
+    navigate(state.onboarded ? 'home' : 'onboarding');
+  };
+
   const toggleFavorite = (id: string) => {
     setState(prev => ({
       ...prev,
@@ -77,6 +92,8 @@ const App: React.FC = () => {
 
   const renderScreen = () => {
     switch (currentScreen) {
+      case 'login':
+        return <Login onLogin={handleLogin} />;
       case 'onboarding':
         return <Onboarding onComplete={() => { setState(p => ({...p, onboarded: true})); navigate('home'); }} updateProfile={updateProfile} user={state.user} />;
       case 'home':
