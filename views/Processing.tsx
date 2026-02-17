@@ -75,11 +75,11 @@ export const Processing: React.FC<ProcessingProps> = ({ onCancel }) => {
         @keyframes neural-pulse {
           0%, 100% { 
             opacity: 0.3; 
-            transform: rotate(${0}deg) translate(40px) scale(1); 
+            transform: translate(40px) scale(1); 
           }
           50% { 
             opacity: 1; 
-            transform: rotate(${0}deg) translate(60px) scale(1.5); 
+            transform: translate(60px) scale(1.5); 
           }
         }
       `}</style>
