@@ -150,6 +150,47 @@ export const Home: React.FC<HomeProps> = ({ navigate, user, recentHistory }) => 
           ))}
         </div>
 
+        {/* Trending in Your Category */}
+        <div className="space-y-4 mb-8 animate-fade-in-up stagger-2">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xs font-bold uppercase tracking-widest opacity-40">Trending in Your Category</h3>
+            <button 
+              className="text-[10px] font-bold uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity"
+              style={{ color: accentColor }}
+            >
+              Explore
+            </button>
+          </div>
+          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+            {[
+              { name: 'Organic Protein Bar', score: 87, category: 'Nutrition' },
+              { name: 'Green Tea Extract', score: 92, category: 'Wellness' },
+              { name: 'Vitamin D3 Gummies', score: 85, category: 'Supplements' },
+              { name: 'Probiotic Blend', score: 89, category: 'Gut Health' }
+            ].map((product, idx) => (
+              <button
+                key={idx}
+                onClick={() => navigate('tools')}
+                className="flex-shrink-0 w-40 h-52 bg-white/5 border border-white/5 rounded-[24px] p-4 hover:bg-white/10 transition-all group"
+                style={{ animationDelay: `${idx * 50}ms` }}
+              >
+                <div className="w-full h-32 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl flex items-center justify-center mb-3">
+                  <div className="text-[10px] opacity-30 font-bold">PRODUCT</div>
+                </div>
+                <h4 className="font-bold text-xs mb-1 line-clamp-2 text-left">{product.name}</h4>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[10px] opacity-40 uppercase">{product.category}</span>
+                  <div className={`px-2 py-1 rounded-md text-[10px] font-black ${
+                    product.score >= 85 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                  }`}>
+                    {product.score}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Recent Activity */}
         {recentHistory.length > 0 && (
           <div className="space-y-4 animate-fade-in-up stagger-3">
@@ -177,6 +218,12 @@ export const Home: React.FC<HomeProps> = ({ navigate, user, recentHistory }) => 
                   </div>
                   <div className="text-[10px] opacity-30 text-right">
                     <div>{new Date(item.timestamp).toLocaleDateString()}</div>
+                    <div className="mt-1">
+                      {new Date(item.timestamp).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </div>
                   </div>
                 </div>
               ))}

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ThemeMode, AnimationIntensity, AppState, ProductAnalysis, UserProfile } from './types';
+import { ThemeMode, AnimationIntensity, AppState, ProductAnalysis, UserProfile, TrackedProduct } from './types';
 import { DEFAULT_USER_PROFILE } from './constants';
 import { ThemeWrapper } from './components/ThemeWrapper';
 import { Home } from './views/Home';
@@ -15,6 +15,11 @@ import { DeepDive } from './views/DeepDive';
 import { Comparison } from './views/Comparison';
 import { Analytics } from './views/Analytics';
 import { Login } from './views/Login';
+import { BatchAnalysis } from './views/BatchAnalysis';
+import { ProductTracking } from './views/ProductTracking';
+import { AllergenScanner } from './views/AllergenScanner';
+import { SustainabilityDeepDive } from './views/SustainabilityDeepDive';
+import { ExportReports } from './views/ExportReports';
 
 export type Screen = 
   | 'login'
@@ -28,7 +33,12 @@ export type Screen =
   | 'history' 
   | 'deep-dive' 
   | 'comparison'
-  | 'analytics';
+  | 'analytics'
+  | 'batch-analysis'
+  | 'product-tracking'
+  | 'allergen-scanner'
+  | 'sustainability'
+  | 'export-reports';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(() => {
@@ -39,7 +49,10 @@ const App: React.FC = () => {
       history: [],
       favorites: [],
       currentAnalysis: null,
-      onboarded: false
+      onboarded: false,
+      savedComparisons: [],
+      trackedProducts: [],
+      watchlistIngredients: []
     };
   });
 
@@ -90,6 +103,43 @@ const App: React.FC = () => {
     }));
   };
 
+  const addTrackedProduct = (productId: string, productName: string, brand: string) => {
+    setState(prev => ({
+      ...prev,
+      trackedProducts: [
+        ...prev.trackedProducts,
+        {
+          productId,
+          productName,
+          brand,
+          alerts: {
+            reformulationAlert: false,
+            availabilityAlert: false
+          },
+          priceHistory: [],
+          reformulations: [],
+          addedAt: Date.now()
+        }
+      ]
+    }));
+  };
+
+  const updateTrackingAlerts = (productId: string, alerts: TrackedProduct['alerts']) => {
+    setState(prev => ({
+      ...prev,
+      trackedProducts: prev.trackedProducts.map(p =>
+        p.productId === productId ? { ...p, alerts } : p
+      )
+    }));
+  };
+
+  const removeTrackedProduct = (productId: string) => {
+    setState(prev => ({
+      ...prev,
+      trackedProducts: prev.trackedProducts.filter(p => p.productId !== productId)
+    }));
+  };
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'login':
@@ -116,6 +166,16 @@ const App: React.FC = () => {
         return <Comparison products={state.history} initialId={state.currentAnalysis?.id} onBack={() => navigate('results')} />;
       case 'analytics':
         return <Analytics history={state.history} onBack={() => navigate('tools')} />;
+      case 'batch-analysis':
+        return <BatchAnalysis history={state.history} onBack={() => navigate('tools')} navigate={navigate} />;
+      case 'product-tracking':
+        return <ProductTracking trackedProducts={state.trackedProducts} onBack={() => navigate('tools')} onUpdateAlerts={updateTrackingAlerts} />;
+      case 'allergen-scanner':
+        return <AllergenScanner history={state.history} onBack={() => navigate('tools')} />;
+      case 'sustainability':
+        return <SustainabilityDeepDive onBack={() => navigate('tools')} />;
+      case 'export-reports':
+        return <ExportReports onBack={() => navigate('tools')} />;
       default:
         return <Home navigate={navigate} user={state.user} />;
     }

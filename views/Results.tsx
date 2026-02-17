@@ -1,7 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { LucideChevronLeft, LucideStar, LucideCheckCircle2, LucideAlertTriangle, LucideInfo, LucideShare2, LucideLayoutList, LucideDownload, LucideFileText, LucideShield, LucideLeaf } from 'lucide-react';
 import { ProductAnalysis } from '../types';
+import { ScoreRing } from '../components/ScoreRing';
+import { Modal } from '../components/Modal';
+import { Input } from '../components/Input';
+import { Button } from '../components/Button';
 
 interface ResultsProps {
   analysis: ProductAnalysis | null;
@@ -12,42 +16,10 @@ interface ResultsProps {
   toggleFavorite: () => void;
 }
 
-// Animated Score Component
-const AnimatedScore: React.FC<{ value: number; delay?: number }> = ({ value, delay = 0 }) => {
-  const [displayValue, setDisplayValue] = useState(0);
-  
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      let current = 0;
-      const increment = value / 30;
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= value) {
-          setDisplayValue(value);
-          clearInterval(timer);
-        } else {
-          setDisplayValue(Math.floor(current));
-        }
-      }, 30);
-      return () => clearInterval(timer);
-    }, delay);
-    return () => clearTimeout(timeout);
-  }, [value, delay]);
-
-  const scoreColor = (val: number) => {
-    if (val >= 80) return 'text-emerald-500';
-    if (val >= 60) return 'text-amber-500';
-    return 'text-red-500';
-  };
-
-  return (
-    <div className={`text-5xl font-black ${scoreColor(value)} animate-count-up`}>
-      {displayValue}
-    </div>
-  );
-};
-
 export const Results: React.FC<ResultsProps> = ({ analysis, onBack, onDeepDive, onCompare, isFavorite, toggleFavorite }) => {
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [notes, setNotes] = useState('');
+
   if (!analysis) return null;
 
   const scoreColor = (val: number) => {
@@ -292,23 +264,13 @@ export const Results: React.FC<ResultsProps> = ({ analysis, onBack, onDeepDive, 
         <section className="space-y-4 animate-fade-in-up stagger-7">
           <h3 className="text-xs font-bold uppercase tracking-widest opacity-40 ml-2">Overall Scores</h3>
           
-          {/* Main Scores */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className={`bg-gradient-to-br ${scoreBgColor(analysis.productScore.health)} border border-white/10 rounded-[32px] p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-lg`}>
-              <div className="absolute top-0 right-0 p-2 opacity-20"><LucideInfo size={14} /></div>
-              <span className="text-[10px] uppercase font-bold opacity-40 mb-2">Health Score</span>
-              <AnimatedScore value={analysis.productScore.health} delay={0} />
-              <div className="mt-2 text-[9px] opacity-40 uppercase font-bold tracking-widest">
-                {analysis.productScore.health >= 80 ? 'Excellent' : analysis.productScore.health >= 60 ? 'Good' : 'Fair'}
-              </div>
+          {/* Main Scores using ScoreRing */}
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 flex flex-col items-center justify-center shadow-lg">
+              <ScoreRing score={analysis.productScore.health} label="Health" size={110} />
             </div>
-            <div className={`bg-gradient-to-br ${scoreBgColor(analysis.productScore.overall)} border border-white/10 rounded-[32px] p-6 flex flex-col items-center justify-center relative overflow-hidden shadow-lg`}>
-              <div className="absolute top-0 right-0 p-2 opacity-20"><LucideInfo size={14} /></div>
-              <span className="text-[10px] uppercase font-bold opacity-40 mb-2">Overall Quality</span>
-              <AnimatedScore value={analysis.productScore.overall} delay={200} />
-              <div className="mt-2 text-[9px] opacity-40 uppercase font-bold tracking-widest">
-                {analysis.productScore.overall >= 80 ? 'Excellent' : analysis.productScore.overall >= 60 ? 'Good' : 'Fair'}
-              </div>
+            <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 flex flex-col items-center justify-center shadow-lg">
+              <ScoreRing score={analysis.productScore.overall} label="Overall" size={110} animationDelay={200} />
             </div>
           </div>
 
@@ -341,11 +303,20 @@ export const Results: React.FC<ResultsProps> = ({ analysis, onBack, onDeepDive, 
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-4 pb-8 animate-fade-in-up stagger-8">
-          <button className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
+          <button 
+            onClick={() => setShowNotesModal(true)}
+            className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
             <LucideFileText size={18} />
             Add Notes
           </button>
-          <button className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
+          <button 
+            onClick={() => {
+              // In production, would trigger PDF export
+              alert('Exporting as PDF...');
+            }}
+            className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
             <LucideDownload size={18} />
             Export PDF
           </button>
@@ -364,6 +335,40 @@ export const Results: React.FC<ResultsProps> = ({ analysis, onBack, onDeepDive, 
           </button>
         </div>
       </div>
+
+      {/* Notes Modal */}
+      {showNotesModal && (
+        <Modal onClose={() => setShowNotesModal(false)} title="Add Notes">
+          <div className="space-y-4">
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add your personal notes about this product..."
+              className="w-full h-32 p-4 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+            <div className="flex gap-3">
+              <Button
+                variant="ghost"
+                fullWidth
+                onClick={() => setShowNotesModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                fullWidth
+                onClick={() => {
+                  // In production, would save notes
+                  alert('Notes saved!');
+                  setShowNotesModal(false);
+                }}
+              >
+                Save Notes
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };
