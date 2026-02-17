@@ -1,0 +1,133 @@
+/* Theme Mode Overrides for AuraScan AI */
+
+/* Light Mode - Enhanced */
+[data-theme="light"] {
+  --color-background: var(--color-background-light);
+  --color-surface: var(--color-surface-light);
+  --color-text: var(--color-text-light);
+  --color-text-dim: var(--color-text-dim-light);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.15);
+  --shadow-glow: 0 0 20px rgba(0, 102, 255, 0.2);
+}
+
+/* Dark Mode - Default (Enhanced) */
+[data-theme="dark"] {
+  --color-background: var(--color-background-dark);
+  --color-surface: var(--color-surface-dark);
+  --color-text: var(--color-text-dark);
+  --color-text-dim: var(--color-text-dim-dark);
+}
+
+/* Accent Color Variations */
+[data-accent="blue"] {
+  --accent-color: #0066FF;
+  --accent-glow: 0 0 20px rgba(0, 102, 255, 0.3);
+}
+
+[data-accent="violet"] {
+  --accent-color: #7C3AED;
+  --accent-glow: 0 0 20px rgba(124, 58, 237, 0.3);
+}
+
+[data-accent="cyan"] {
+  --accent-color: #00D9FF;
+  --accent-glow: 0 0 20px rgba(0, 217, 255, 0.3);
+}
+
+[data-accent="orange"] {
+  --accent-color: #FF9500;
+  --accent-glow: 0 0 20px rgba(255, 149, 0, 0.3);
+}
+
+/* Animation Intensity Modes */
+[data-animation="minimal"] {
+  --animation-multiplier: 0.3;
+}
+
+[data-animation="minimal"] * {
+  animation-duration: calc(var(--animation-duration-normal) * 0.3) !important;
+  transition-duration: calc(var(--animation-duration-normal) * 0.3) !important;
+}
+
+[data-animation="moderate"] {
+  --animation-multiplier: 0.7;
+}
+
+[data-animation="moderate"] * {
+  animation-duration: calc(var(--animation-duration-normal) * 0.7) !important;
+  transition-duration: calc(var(--animation-duration-normal) * 0.7) !important;
+}
+
+[data-animation="full"] {
+  --animation-multiplier: 1;
+}
+
+/* Reduced Motion - System Preference Override */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Color Blindness Modes - Placeholder filters */
+[data-cb="protanopia"] {
+  filter: url('#protanopia-filter');
+}
+
+[data-cb="deuteranopia"] {
+  filter: url('#deuteranopia-filter');
+}
+
+[data-cb="tritanopia"] {
+  filter: url('#tritanopia-filter');
+}
+
+/* Font Scale Modes */
+[data-font-scale="90"] {
+  font-size: 90%;
+}
+
+[data-font-scale="100"] {
+  font-size: 100%;
+}
+
+[data-font-scale="110"] {
+  font-size: 110%;
+}
+
+[data-font-scale="120"] {
+  font-size: 120%;
+}
+
+/* High Contrast Mode */
+[data-high-contrast="true"] {
+  --color-text: #FFFFFF;
+  --color-text-dim: #E0E0E0;
+  --color-background: #000000;
+  --color-surface: #1A1A1A;
+}
+
+[data-high-contrast="true"][data-theme="light"] {
+  --color-text: #000000;
+  --color-text-dim: #333333;
+  --color-background: #FFFFFF;
+  --color-surface: #F5F5F5;
+}
+
+/* Reduced Motion Mode - Manual Toggle */
+[data-reduced-motion="true"] *,
+[data-reduced-motion="true"] *::before,
+[data-reduced-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
