@@ -5,10 +5,10 @@ import {
   LucideChevronLeft, LucideUser, LucideEye, LucideDatabase, 
   LucideBell, LucideShieldCheck, LucideGlobe, LucideDownload,
   LucideZap, LucidePalette, LucideAccessibility, LucideKey,
-  LucideSmartphone, LucideHelpCircle, LucideChevronRight
+  LucideSmartphone, LucideHelpCircle, LucideChevronRight, LucideTrash
 } from 'lucide-react';
 import { ACCENT_COLORS, ALLERGENS, DIETARY_PREFS } from '../constants';
-import { Toggle, Card, Badge } from '../components';
+import { Toggle, Card, Badge, ColorPicker, Modal, Button } from '../components';
 
 interface SettingsProps {
   user: UserProfile;
@@ -18,6 +18,7 @@ interface SettingsProps {
 
 export const Settings: React.FC<SettingsProps> = ({ user, updateProfile, onBack }) => {
   const [showExportConfirm, setShowExportConfirm] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const exportData = (format: 'json' | 'csv') => {
     // Placeholder for export functionality
@@ -121,30 +122,13 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateProfile, onBack 
           
           <Card variant="default" padding="lg">
             <div className="space-y-6">
-              {/* Accent Color */}
+              {/* Accent Color with ColorPicker */}
               <div>
                 <p className="text-sm font-bold mb-4">Accent Color</p>
-                <div className="flex justify-between">
-                  {ACCENT_COLORS.map(c => (
-                    <button 
-                      key={c.value}
-                      onClick={() => updateProfile({ ...user, theme: { ...user.theme, accentColor: c.value }})}
-                      className={`relative transition-all hover:scale-110 ${
-                        user.theme.accentColor === c.value ? 'scale-110' : ''
-                      }`}
-                    >
-                      <div 
-                        className={`w-12 h-12 rounded-full border-4 transition-all ${
-                          user.theme.accentColor === c.value ? 'border-white shadow-lg' : 'border-transparent'
-                        }`}
-                        style={{ 
-                          backgroundColor: c.value,
-                          boxShadow: user.theme.accentColor === c.value ? `0 0 20px ${c.value}60` : 'none'
-                        }}
-                      />
-                    </button>
-                  ))}
-                </div>
+                <ColorPicker
+                  selected={user.theme.accentColor}
+                  onChange={(color) => updateProfile({ ...user, theme: { ...user.theme, accentColor: color }})}
+                />
               </div>
 
               {/* Theme Mode */}
@@ -217,32 +201,165 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateProfile, onBack 
           
           <Card variant="default" padding="lg">
             <div className="space-y-5">
+              {/* Color Blindness Mode */}
+              <div>
+                <p className="text-sm font-bold mb-3">Color Blindness Mode</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: 'none', label: 'None' },
+                    { value: 'protanopia', label: 'Protanopia' },
+                    { value: 'deuteranopia', label: 'Deuteranopia' },
+                    { value: 'tritanopia', label: 'Tritanopia' }
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => updateProfile({ 
+                        ...user, 
+                        theme: { ...user.theme, colorBlindnessMode: option.value as any }
+                      })}
+                      className={`p-3 rounded-xl border-2 text-xs font-bold transition-all ${
+                        (user.theme.colorBlindnessMode || 'none') === option.value
+                          ? 'bg-blue-600 border-blue-600 text-white'
+                          : 'border-white/10 bg-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* High Contrast Mode */}
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <p className="text-sm font-bold">High Contrast Mode</p>
                   <p className="text-xs opacity-50 mt-1">Increase visual contrast for better readability</p>
                 </div>
-                <div className="w-12 h-6 bg-white/10 rounded-full"></div>
+                <Toggle
+                  checked={user.theme.highContrast || false}
+                  onChange={(checked) => updateProfile({ 
+                    ...user, 
+                    theme: { ...user.theme, highContrast: checked }
+                  })}
+                />
               </div>
               
+              {/* Reduce Motion */}
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm font-bold">Reduce Motion</p>
+                  <p className="text-sm font-bold">Reduced Motion</p>
                   <p className="text-xs opacity-50 mt-1">Minimize animations for accessibility</p>
                 </div>
-                <Badge variant={user.theme.animationIntensity === AnimationIntensity.MINIMAL ? 'success' : 'neutral'} size="sm">
-                  {user.theme.animationIntensity === AnimationIntensity.MINIMAL ? 'Active' : 'Off'}
-                </Badge>
+                <Toggle
+                  checked={user.theme.reducedMotion || false}
+                  onChange={(checked) => updateProfile({ 
+                    ...user, 
+                    theme: { ...user.theme, reducedMotion: checked }
+                  })}
+                />
               </div>
             </div>
           </Card>
         </section>
 
-        {/* Notifications */}
-        <section className="space-y-4 animate-fade-in-up stagger-3">
+        {/* Data & Privacy */}
+        <section className="space-y-4 animate-fade-in-up stagger-4">
           <div className="flex items-center gap-2 opacity-40">
-            <LucideBell size={16} />
-            <h3 className="text-[10px] font-bold uppercase tracking-widest">Notifications</h3>
+            <LucideShieldCheck size={16} />
+            <h3 className="text-[10px] font-bold uppercase tracking-widest">Data & Privacy</h3>
+          </div>
+          
+          <Card variant="default" padding="lg">
+            <div className="space-y-4">
+              <button
+                onClick={() => exportData('json')}
+                className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all"
+              >
+                <div className="flex items-center gap-3 text-left">
+                  <LucideDownload size={20} className="text-blue-400" />
+                  <div>
+                    <p className="text-sm font-bold">Export All Data</p>
+                    <p className="text-xs opacity-50">Download your personal data</p>
+                  </div>
+                </div>
+                <LucideChevronRight size={20} className="text-white/40" />
+              </button>
+
+              <button
+                onClick={() => {
+                  if (confirm('Are you sure you want to delete all scans? This cannot be undone.')) {
+                    alert('All scans deleted');
+                  }
+                }}
+                className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-red-500/10 hover:border-red-500/20 transition-all"
+              >
+                <div className="flex items-center gap-3 text-left">
+                  <LucideTrash size={20} className="text-amber-400" />
+                  <div>
+                    <p className="text-sm font-bold">Delete All Scans</p>
+                    <p className="text-xs opacity-50">Clear your scan history</p>
+                  </div>
+                </div>
+                <LucideChevronRight size={20} className="text-white/40" />
+              </button>
+
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full flex items-center justify-between p-4 bg-red-500/10 border border-red-500/20 rounded-xl hover:bg-red-500/20 transition-all"
+              >
+                <div className="flex items-center gap-3 text-left">
+                  <LucideTrash size={20} className="text-red-400" />
+                  <div>
+                    <p className="text-sm font-bold text-red-400">Delete Account</p>
+                    <p className="text-xs opacity-50">Permanently delete your account</p>
+                  </div>
+                </div>
+                <LucideChevronRight size={20} className="text-white/40" />
+              </button>
+            </div>
+          </Card>
+        </section>
+
+        {/* Regional Settings */}
+        <section className="space-y-4 animate-fade-in-up stagger-5">
+          <div className="flex items-center gap-2 opacity-40">
+            <LucideGlobe size={16} />
+            <h3 className="text-[10px] font-bold uppercase tracking-widest">Regional</h3>
+          </div>
+          
+          <Card variant="default" padding="lg">
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm font-bold mb-3">Language</p>
+                <select className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="en">English</option>
+                  <option value="es">Español</option>
+                  <option value="fr">Français</option>
+                  <option value="de">Deutsch</option>
+                  <option value="ja">日本語</option>
+                </select>
+              </div>
+
+              <div>
+                <p className="text-sm font-bold mb-3">Measurement Units</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button className="p-3 rounded-xl border-2 border-blue-600 bg-blue-600 text-xs font-bold text-white">
+                    Metric
+                  </button>
+                  <button className="p-3 rounded-xl border-2 border-white/10 bg-white/5 text-xs font-bold hover:bg-white/10">
+                    Imperial
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        {/* Accessibility - Updated */}
+        <section className="space-y-4 animate-fade-in-up stagger-2">
+          <div className="flex items-center gap-2 opacity-40">
+            <LucideAccessibility size={16} />
+            <h3 className="text-[10px] font-bold uppercase tracking-widest">Accessibility</h3>
           </div>
           
           <Card variant="default" padding="lg">
@@ -455,6 +572,47 @@ export const Settings: React.FC<SettingsProps> = ({ user, updateProfile, onBack 
             </div>
           </div>
         </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <Modal onClose={() => setShowDeleteModal(false)} title="Delete Account">
+          <div className="space-y-4">
+            <p className="text-sm text-white/80">
+              Are you absolutely sure you want to delete your account? This action cannot be undone and will permanently delete:
+            </p>
+            <ul className="text-sm text-white/60 space-y-2 list-disc list-inside">
+              <li>All your scan history</li>
+              <li>Saved comparisons and favorites</li>
+              <li>Analytics data and insights</li>
+              <li>Account settings and preferences</li>
+            </ul>
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <p className="text-sm text-red-400 font-bold">
+                ⚠️ This action is irreversible
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="ghost"
+                fullWidth
+                onClick={() => setShowDeleteModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                fullWidth
+                onClick={() => {
+                  alert('Account deletion initiated');
+                  setShowDeleteModal(false);
+                }}
+              >
+                Delete Account
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   );
