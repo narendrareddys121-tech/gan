@@ -2,6 +2,7 @@
 import React from 'react';
 import { LucideChevronLeft, LucideStar, LucideCheckCircle2, LucideAlertTriangle, LucideInfo, LucideShare2, LucideLayoutList } from 'lucide-react';
 import { ProductAnalysis } from '../types';
+import { useToast } from '../components/Toast';
 
 interface ResultsProps {
   analysis: ProductAnalysis | null;
@@ -13,7 +14,39 @@ interface ResultsProps {
 }
 
 export const Results: React.FC<ResultsProps> = ({ analysis, onBack, onDeepDive, onCompare, isFavorite, toggleFavorite }) => {
+  const { showToast } = useToast();
+  
   if (!analysis) return null;
+
+  const handleToggleFavorite = () => {
+    toggleFavorite();
+    showToast(
+      isFavorite ? 'Removed from favorites' : 'Added to favorites',
+      'success'
+    );
+  };
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${analysis.name} - AuraScan Analysis`,
+          text: `Health Score: ${analysis.productScore.health}/100\n${analysis.smartVerdict.recommendation}`,
+          url: window.location.href
+        });
+        showToast('Shared successfully', 'success');
+      } else {
+        // Fallback to clipboard
+        const shareText = `${analysis.name} by ${analysis.brand}\nHealth Score: ${analysis.productScore.health}/100\n${analysis.smartVerdict.recommendation}`;
+        await navigator.clipboard.writeText(shareText);
+        showToast('Copied to clipboard', 'success');
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        showToast('Failed to share', 'error');
+      }
+    }
+  };
 
   const scoreColor = (val: number) => {
     if (val >= 80) return 'text-emerald-500';
@@ -29,10 +62,10 @@ export const Results: React.FC<ResultsProps> = ({ analysis, onBack, onDeepDive, 
           <LucideChevronLeft />
         </button>
         <div className="flex gap-2">
-          <button onClick={toggleFavorite} className="p-2 rounded-full hover:bg-white/5 transition-colors">
+          <button onClick={handleToggleFavorite} className="p-2 rounded-full hover:bg-white/5 transition-colors">
             <LucideStar size={22} className={isFavorite ? 'fill-yellow-400 text-yellow-400' : ''} />
           </button>
-          <button className="p-2 rounded-full hover:bg-white/5 transition-colors">
+          <button onClick={handleShare} className="p-2 rounded-full hover:bg-white/5 transition-colors">
             <LucideShare2 size={22} />
           </button>
         </div>

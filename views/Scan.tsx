@@ -1,8 +1,9 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { LucideX, LucideZap, LucideImage, LucideRefreshCcw } from 'lucide-react';
-import { analyzeProduct } from '../services/geminiService';
 import { ProductAnalysis, UserProfile } from '../types';
+import { useAnalysis } from '../services/useApi';
+import { useToast } from '../components/Toast';
 
 interface ScanProps {
   onBack: () => void;
@@ -15,9 +16,11 @@ export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisCompl
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  
+  const { analyze, isLoading, error: apiError } = useAnalysis();
+  const { showToast } = useToast();
 
   useEffect(() => {
     async function startCamera() {
@@ -31,8 +34,10 @@ export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisCompl
           videoRef.current.srcObject = s;
         }
         setCameraReady(true);
-      } catch (e) {
-        setError('Camera access denied. Please enable permissions.');
+      } catch (e: any) {
+        const errorMsg = 'Camera access denied. Please enable permissions.';
+        setCameraError(errorMsg);
+        showToast(errorMsg, 'error');
       }
     }
     startCamera();
@@ -41,12 +46,18 @@ export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisCompl
         streamRef.current.getTracks().forEach(t => t.stop());
       }
     };
-  }, []);
+  }, [showToast]);
+  
+  // Show API errors as toasts
+  useEffect(() => {
+    if (apiError) {
+      showToast(apiError.message, 'error');
+    }
+  }, [apiError, showToast]);
 
   const captureAndAnalyze = async () => {
     if (!videoRef.current || !canvasRef.current) return;
     
-    setIsAnalyzing(true);
     onScanStart();
     
     try {
@@ -58,30 +69,35 @@ export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisCompl
       ctx?.drawImage(video, 0, 0);
       
       const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-      const result = await analyzeProduct(dataUrl, user);
-      onAnalysisComplete(result);
+      const result = await analyze(dataUrl, user);
+      
+      if (result) {
+        showToast('Analysis complete!', 'success');
+        onAnalysisComplete(result);
+      }
     } catch (e) {
       console.error(e);
-      setError('Analysis failed. Try again.');
-      setIsAnalyzing(false);
+      // Error already shown via useEffect
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
-      setIsAnalyzing(true);
       onScanStart();
+      
       try {
-        const result = await analyzeProduct(dataUrl, user);
-        onAnalysisComplete(result);
+        const result = await analyze(dataUrl, user);
+        if (result) {
+          showToast('Analysis complete!', 'success');
+          onAnalysisComplete(result);
+        }
       } catch (err) {
-        setError('Analysis failed.');
-        setIsAnalyzing(false);
+        // Error already shown via useEffect
       }
     };
     reader.readAsDataURL(file);
@@ -89,6 +105,35 @@ export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisCompl
 
   return (
     <div className="absolute inset-0 bg-black flex flex-col z-50">
+      {/* Camera Error Overlay */}
+      {cameraError && (
+        <div className="absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-6">
+          <div className="max-w-sm text-center space-y-6">
+            <div className="w-16 h-16 mx-auto bg-red-500/10 rounded-full flex items-center justify-center">
+              <LucideX size={32} className="text-red-500" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold mb-2">Camera Access Denied</h3>
+              <p className="text-sm opacity-60">
+                Please enable camera permissions in your browser settings to use the scan feature.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <label className="block w-full py-4 bg-blue-600 rounded-2xl font-bold cursor-pointer">
+                Upload Photo Instead
+                <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
+              </label>
+              <button 
+                onClick={onBack}
+                className="w-full py-4 bg-white/5 rounded-2xl font-bold"
+              >
+                Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Viewfinder */}
       <video 
         ref={videoRef} 
@@ -98,7 +143,7 @@ export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisCompl
       />
       
       {/* Loading overlay when analyzing */}
-      {isAnalyzing && (
+      {isLoading && (
         <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-40">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
@@ -138,7 +183,7 @@ export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisCompl
           
           <button 
             onClick={captureAndAnalyze}
-            disabled={isAnalyzing}
+            disabled={isLoading || !cameraReady}
             className="w-20 h-20 rounded-full bg-white border-8 border-white/20 flex items-center justify-center active:scale-90 transition-transform disabled:opacity-50"
           >
             <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center">
@@ -153,13 +198,6 @@ export const Scan: React.FC<ScanProps> = ({ onBack, onScanStart, onAnalysisCompl
       </div>
 
       <canvas ref={canvasRef} className="hidden" />
-      
-      {error && (
-        <div className="absolute top-20 left-6 right-6 p-4 bg-red-500/90 text-white rounded-2xl text-sm font-medium z-50">
-          {error}
-          <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
-        </div>
-      )}
     </div>
   );
 };
